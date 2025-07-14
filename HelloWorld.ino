@@ -439,7 +439,7 @@ void loop() {
   static unsigned long lastColorChange = 0;
   static uint8_t colorIndex = 0;
   
-  if (millis() - lastColorChange > 10000) {
+  if (millis() - lastColorChange > 100) {
     uint16_t colors[] = {0x0000, 0x001F, 0x07E0, 0xF800, 0xFFFF}; // Black, Blue, Green, Red, White
     String colorNames[] = {"Black", "Blue", "Green", "Red", "White"};
     

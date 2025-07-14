@@ -1,53 +1,94 @@
 /*
-  Hello World Program for ESP32-C3 with GC9A01 Round LCD
-  Working version using direct SPI control to bypass TFT_eSPI bugs
-  Based on research from GitHub issue #3772
+  ESP32-C3 GC9A01 Round Display - Hello World Implementation
+  
+  This is the baseline working implementation for ESP32-C3 with GC9A01 240x240 round display.
+  Uses direct SPI control to bypass TFT_eSPI library compatibility issues.
+  
+  Hardware:
+  - ESP32-C3 microcontroller (RISC-V architecture)
+  - GC9A01 240x240 round IPS display
+  - SPI communication protocol
+  
+  Pin Configuration (ESP32-C3 specific):
+  - SCLK: GPIO 6  (SPI Clock)
+  - MOSI: GPIO 7  (SPI Data Output) 
+  - CS:   GPIO 10 (Chip Select)
+  - DC:   GPIO 2  (Data/Command)
+  - RST:  Not connected (-1)
+  - BL:   GPIO 3  (Backlight control)
+  
+  Features:
+  - Direct SPI register control (no external libraries)
+  - Proper GC9A01 initialization sequence
+  - Color cycling demonstration
+  - Serial debugging output
+  - Maximum hardware compatibility
+  
+  Author: Community Contribution
+  License: MIT
+  
+  Based on research from:
+  - TFT_eSPI GitHub issues
+  - ESP32-C3 datasheet
+  - GC9A01 controller documentation
 */
 
 #include <SPI.h>
 
-// Pin definitions for ESP32-C3 with round GC9A01 display - CORRECTED PINS
-#define TFT_SCLK 6   // SPI Clock
-#define TFT_MOSI 7   // SPI Data Output (MOSI)
-#define TFT_CS   10  // Chip Select
-#define TFT_DC   2   // Data/Command select
-#define TFT_RST  -1  // Reset pin (not connected)
-#define TFT_BL   3   // Backlight control
+// Hardware Configuration - ESP32-C3 with GC9A01 Round Display
+#define TFT_SCLK 6   // SPI Clock - GPIO 6
+#define TFT_MOSI 7   // SPI Data Output (MOSI) - GPIO 7
+#define TFT_CS   10  // Chip Select - GPIO 10
+#define TFT_DC   2   // Data/Command select - GPIO 2
+#define TFT_RST  -1  // Reset pin (not connected in this implementation)
+#define TFT_BL   3   // Backlight control - GPIO 3
 #define LED_BUILTIN -1  // ESP32-C3 module has no built-in LED
 
-// Screen resolution
-#define TFT_WIDTH  240
-#define TFT_HEIGHT 240
+// Display Specifications
+#define TFT_WIDTH  240   // Display width in pixels
+#define TFT_HEIGHT 240   // Display height in pixels
 
-// SPI instance for ESP32-C3
-SPIClass mySPI(FSPI); // Use FSPI (ESP32-C3's SPI2)
+// SPI Configuration for ESP32-C3
+SPIClass mySPI(FSPI); // Use FSPI (ESP32-C3's SPI2 peripheral)
 
+/**
+ * Send command byte to GC9A01 controller
+ * @param cmd Command byte to send
+ */
 void tft_send_cmd(uint8_t cmd) {
-  digitalWrite(TFT_DC, LOW);  // Command mode
-  digitalWrite(TFT_CS, LOW);
-  mySPI.transfer(cmd);
-  digitalWrite(TFT_CS, HIGH);
+  digitalWrite(TFT_DC, LOW);  // Set DC low for command mode
+  digitalWrite(TFT_CS, LOW);  // Assert chip select
+  mySPI.transfer(cmd);        // Send command byte
+  digitalWrite(TFT_CS, HIGH); // Release chip select
 }
 
+/**
+ * Send data byte to GC9A01 controller
+ * @param data Data byte to send
+ */
 void tft_send_data(uint8_t data) {
-  digitalWrite(TFT_DC, HIGH); // Data mode
-  digitalWrite(TFT_CS, LOW);
-  mySPI.transfer(data);
-  digitalWrite(TFT_CS, HIGH);
+  digitalWrite(TFT_DC, HIGH); // Set DC high for data mode
+  digitalWrite(TFT_CS, LOW);  // Assert chip select
+  mySPI.transfer(data);       // Send data byte
+  digitalWrite(TFT_CS, HIGH); // Release chip select
 }
 
+/**
+ * Initialize GC9A01 display controller and GPIO pins
+ * This function sets up the hardware and sends the initialization sequence
+ */
 void tft_init() {
-  // Initialize GPIO pins
+  // Configure GPIO pins for SPI communication
   Serial.println("Setting up GPIO pins...");
-  pinMode(TFT_DC, OUTPUT);
-  if (TFT_RST >= 0) pinMode(TFT_RST, OUTPUT);
-  pinMode(TFT_CS, OUTPUT);
-  pinMode(TFT_BL, OUTPUT);
+  pinMode(TFT_DC, OUTPUT);    // Data/Command pin
+  if (TFT_RST >= 0) pinMode(TFT_RST, OUTPUT); // Reset pin (optional)
+  pinMode(TFT_CS, OUTPUT);    // Chip select pin
+  pinMode(TFT_BL, OUTPUT);    // Backlight control pin
   Serial.println("GPIO pins configured");
   
-  // Turn on backlight
+  // Enable backlight
   digitalWrite(TFT_BL, HIGH);
-  Serial.println("Backlight ON - Pin 3 set HIGH");
+  Serial.println("Backlight enabled - GPIO 3 set HIGH");
   
   // Test all pins by toggling them
   Serial.println("Testing pins...");
